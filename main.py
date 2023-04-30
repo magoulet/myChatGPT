@@ -13,17 +13,21 @@ def main():
 
     messages = [ {"role": "system", "content": "You are an intelligent assistant." } ]
     exit_words = ("q","Q","quit","QUIT","EXIT")
-    print("Type q, Q, quit, QUIT or EXIT and press Enter to end the chat session")
+    print("A blankline will send the message. Type Ctrl-d to end the chat session")
     lines = []
 
     while True:
         console.print("You: ", end='')
         while True:
+          try:
             line = input()
             if line:
               lines.append(line)
             else:
               break
+          except EOFError:
+            console.print("Exiting program...")
+            sys.exit(0)
 
         message = '\n'.join(lines)
 
