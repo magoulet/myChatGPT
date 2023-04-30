@@ -1,37 +1,50 @@
 import openai
+import readline
+from rich.console import Console
+from rich.markdown import Markdown
+import sys
 import yaml
 
 def main():
     cfg = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
     openai.api_key = cfg['openAI']['key']
+    max_width = 80
+    console = Console(width=80, tab_size=4)
 
     messages = [ {"role": "system", "content": "You are an intelligent assistant." } ]
     exit_words = ("q","Q","quit","QUIT","EXIT")
     print("Type q, Q, quit, QUIT or EXIT and press Enter to end the chat session")
+    lines = []
 
     while True:
-        message = input("You: ")
-        if message in exit_words:
-           print("ENDING CHAT")
-           break
-        else:
+        console.print("You: ", end='')
+        while True:
+            line = input()
+            if line:
+              lines.append(line)
+            else:
+              break
 
-            messages.append(
-                {"role": "user", "content": message},
-            )
+        message = '\n'.join(lines)
 
-            chat = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=messages,
-                temperature=0.7,
-                max_tokens=60
-            )
+        messages.append(
+            {"role": "user", "content": message},
+        )
 
-            reply = chat.choices[0].message
+        chat = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            temperature=0.5
+            # max_tokens=60
+        )
 
-            print("Assistant: ", reply.content)
+        reply = chat.choices[0].message
 
-            messages.append(reply)
+        # print("\n")
+        str = f"Assistant: {reply.content}"
+        console.print(Markdown(str))
+
+        messages.append(reply)
 
     return None
 
