@@ -9,23 +9,23 @@ def main():
     cfg = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
     openai.api_key = cfg['openAI']['key']
     max_width = 80
-    console = Console(width=80, tab_size=4)
+    tab_size = 4
+    console = Console(width=max_width, tab_size=tab_size)
 
     messages = [ {"role": "system", "content": "You are an intelligent assistant." } ]
-    exit_words = ("q","Q","quit","QUIT","EXIT")
-    print("A blankline will send the message. Type Ctrl-d to end the chat session")
+    print("Ctrl-D to send the message. Type Ctrl-C to end the chat session")
     lines = []
 
     while True:
         console.print("You: ", end='')
         while True:
           try:
-            line = input()
-            if line:
+            try:
+              line = input()
               lines.append(line)
-            else:
+            except EOFError:
               break
-          except EOFError:
+          except KeyboardInterrupt:
             console.print("Exiting program...")
             sys.exit(0)
 
@@ -44,8 +44,8 @@ def main():
 
         reply = chat.choices[0].message
 
-        # print("\n")
-        str = f"Assistant: {reply.content}"
+        print("")
+        str = f"**Assistant**: {reply.content}"
         console.print(Markdown(str))
 
         messages.append(reply)
