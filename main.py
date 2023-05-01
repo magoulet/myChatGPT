@@ -1,4 +1,6 @@
 import openai
+import os
+import pickle
 import readline
 from rich.console import Console
 from rich.markdown import Markdown
@@ -12,7 +14,12 @@ def main():
     tab_size = 4
     console = Console(width=max_width, tab_size=tab_size)
 
-    messages = [ {"role": "system", "content": "You are an intelligent assistant." } ]
+    if os.path.isfile('context.pickle'):
+      with open('context.pickle', 'rb') as f:
+        messages = pickle.load(f)
+    else:
+      messages = [ {"role": "system", "content": "You are an intelligent assistant. You work for Amazon as a technical program manager. You excel in writing clear, concise, documents and you love to use Python to help you with your job. You hired a lot of highly qualified technical staff over the years and you're great at crafting resumes." } ]
+
     print("Ctrl-D to send the message. Type Ctrl-C to end the chat session")
     lines = []
 
@@ -27,6 +34,9 @@ def main():
               break
           except KeyboardInterrupt:
             console.print("Exiting program...")
+            console.print("Saving context in a Pickle")
+            with open ('context.pickle', 'wb') as f:
+              pickle.dump(messages, f)
             sys.exit(0)
 
         message = '\n'.join(lines)
