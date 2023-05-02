@@ -12,7 +12,7 @@ def main():
     openai.api_key = cfg['openAI']['key']
     max_width = 80
     tab_size = 4
-    console = Console(width=max_width, tab_size=tab_size)
+    console = Console()
 
     if os.path.isfile('context.pickle'):
       with open('context.pickle', 'rb') as f:
@@ -24,7 +24,8 @@ def main():
     lines = []
 
     while True:
-        console.print("You: ", end='')
+        # console.print("You: ", end='')
+        print("You: ")
         while True:
           try:
             try:
@@ -45,18 +46,21 @@ def main():
             {"role": "user", "content": message},
         )
 
-        chat = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=messages,
-            temperature=0.5
-            # max_tokens=60
-        )
+        try:
+          chat = openai.ChatCompletion.create(
+              model="gpt-3.5-turbo",
+              messages=messages,
+              temperature=0.5
+              # max_tokens=60
+          )
+        except Exception as e:
+          print(e)
 
         reply = chat.choices[0].message
 
         print("")
         str = f"**Assistant**: {reply.content}"
-        console.print(Markdown(str))
+        console.print(Markdown(str), soft_wrap=True)
 
         messages.append(reply)
 
