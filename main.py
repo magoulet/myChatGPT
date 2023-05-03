@@ -5,66 +5,68 @@ import readline
 from rich.console import Console
 from rich.markdown import Markdown
 import sys
+import time
 import yaml
 
-def main():
+def main(message_queue=False):
     cfg = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
     openai.api_key = cfg['openAI']['key']
-    max_width = 80
-    tab_size = 4
     console = Console()
+    messages = [ {"role": "system", "content": "You are an intelligent assistant who works for a large tech company as a technical program manager. You excel in writing clear, concise, documents and you love to use Python to help you with your job. You hired a lot of highly qualified technical staff over the years and you're great at crafting resumes." } ]
 
-    if os.path.isfile('context.pickle'):
-      with open('context.pickle', 'rb') as f:
-        messages = pickle.load(f)
-    else:
-      messages = [ {"role": "system", "content": "You are an intelligent assistant. You work for Amazon as a technical program manager. You excel in writing clear, concise, documents and you love to use Python to help you with your job. You hired a lot of highly qualified technical staff over the years and you're great at crafting resumes." } ]
-
-    print("Ctrl-D to send the message. Type Ctrl-C to end the chat session")
-    lines = []
 
     while True:
-        # console.print("You: ", end='')
+      lines = []
+      if not message_queue:
         print("You: ")
+        # Looping through multi-line input until it encounteres EOF (Ctrl-D)
         while True:
           try:
-            try:
-              line = input()
-              lines.append(line)
-            except EOFError:
-              break
+            line = input()
+            lines.append(line)
+          except EOFError:
+            break
           except KeyboardInterrupt:
             console.print("Exiting program...")
-            console.print("Saving context in a Pickle")
-            with open ('context.pickle', 'wb') as f:
-              pickle.dump(messages, f)
             sys.exit(0)
-
         message = '\n'.join(lines)
-
         messages.append(
             {"role": "user", "content": message},
         )
+        with open('messages.pickle', 'wb') as f:
+          pickle.dump(messages, f)
+      else:
+        with open('messages.pickle', 'rb') as f:
+          messages = pickle.load(f)
 
-        try:
-          chat = openai.ChatCompletion.create(
-              model="gpt-3.5-turbo",
-              messages=messages,
-              temperature=0.5
-              # max_tokens=60
-          )
-        except Exception as e:
-          print(e)
 
-        reply = chat.choices[0].message
+      chat = openai.ChatCompletion.create(
+          model="gpt-3.5-turbo",
+          messages=messages,
+          temperature=0.5
+      )
 
-        print("")
-        str = f"**Assistant**: {reply.content}"
-        console.print(Markdown(str), soft_wrap=True)
+      reply = chat.choices[0].message
 
-        messages.append(reply)
+      # Skip one line then print assistant message
+      # print("")
+      str = f"\n**Assistant**: {reply.content}"
+      # console.print(Markdown(str), soft_wrap=True)
+      console.print(str, soft_wrap=True)
+
+      messages.append(reply)
+
+      message_queue = False
 
     return None
 
 if __name__ == '__main__':
-    main()
+    message_queue = False
+    print("Ctrl-D to send the message. Type Ctrl-C to end the chat session")
+    while True:
+      try:
+        main(message_queue)
+      except Exception as e:
+        message_queue = True
+        print(f"Error: {e}, re-trying in 1 seconds")
+      time.sleep(5)
